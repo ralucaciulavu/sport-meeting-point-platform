@@ -1,6 +1,13 @@
 from fastapi import FastAPI
 from typing import List
 from pydantic import BaseModel
+from backend.models import LocationDB, Base
+from backend.database import engine
+from backend.database import SessionLocal
+
+# Creates tables in DB
+Base.metadata.create_all(bind=engine)
+
 
 # Initialize FastAPI application instance
 app = FastAPI()
@@ -28,6 +35,21 @@ def meeting_point(locations: List[Location]):
     if not locations:
         return {"error": "No locations provided"}
 
+    # Open DB session
+    db = SessionLocal()
+
+    for loc in locations:
+        # Create object DB
+        db_loc = LocationDB(
+            lat=loc.lat,
+            lng=loc.lng
+        )
+        db.add(db_loc)
+
+    db.commit()
+    db.close()
+
+
     # Calculate average latitude
     lat = sum(p.lat for p in locations) / len(locations)
 
@@ -36,3 +58,14 @@ def meeting_point(locations: List[Location]):
 
     # Return the computed meeting point
     return {"lat": lat, "lng": lng}
+
+from backend.database import engine
+
+@app.get("/test-db")
+def test_db():
+    try:
+        connection = engine.connect()
+        connection.close()
+        return {"status": "connected"}
+    except Exception as e:
+        return {"error": str(e)}
