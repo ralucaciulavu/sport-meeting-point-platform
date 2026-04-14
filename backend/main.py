@@ -46,9 +46,10 @@ def meeting_point(locations: List[Location]):
         )
         db.add(db_loc)
 
-    db.commit()
-    db.close()
-
+    try:
+        db.commit()
+    finally:
+        db.close()
 
     # Calculate average latitude
     lat = sum(p.lat for p in locations) / len(locations)
