@@ -70,3 +70,23 @@ def test_db():
         return {"status": "connected"}
     except Exception as e:
         return {"error": str(e)}
+
+@app.get("/locations")
+def get_locations():
+    db = SessionLocal()
+
+    try:
+        # Returns a list of objects -> Python Dict -> JSON (FastAPI transforms dict directly in JSON)
+        locations = db.query(LocationDB).all()
+        return [
+            {
+                "id": loc.id,
+                "lat": loc.lat,
+                "lng": loc.lng,
+                "created_at": loc.created_at
+            }
+            for loc in locations
+        ]
+
+    finally:
+        db.close()
